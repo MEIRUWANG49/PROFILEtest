@@ -376,304 +376,242 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-    // ===============================================
-    // 🔐 配置区域 —— 请替换为你自己的 Supabase 信息
-    // ===============================================
-    const SUPABASE_CONFIG = {
-        // 你的 Supabase 项目 URL (例如 https://xxxxx.supabase.co)
-        url: 'YOUR_SUPABASE_URL',          
-        // 你的 anon / public key (在 Project Settings > API 中找到)
-        anonKey: 'YOUR_SUPABASE_ANON_KEY',  
-        // 存储桶名称 (建议: pdf-archive) —— 请先在 Supabase 中创建 Public bucket
-        bucketName: 'pdf-archive'           
-    };
+    (function(){
+        // 使用立即执行函数避免全局变量冲突，所有变量都在此作用域内
 
-    // 管理员密码 (可自行修改)
-    const ADMIN_PASSWORD = 'cv123456';       
+        // ===============================================
+        // 🔐 配置区域 —— 请替换为你自己的 Supabase 信息
+        // ===============================================
+        const SUPABASE_CONFIG = {
+            url: 'YOUR_SUPABASE_URL',          // 替换为你的 Project URL
+            anonKey: 'YOUR_SUPABASE_ANON_KEY',  // 替换为你的 anon key
+            bucketName: 'pdf-archive'           // 存储桶名称
+        };
 
-    // ---------- 检查是否已配置 ----------
-    const isConfigured = () => {
-        return SUPABASE_CONFIG.url && 
-               SUPABASE_CONFIG.url !== 'YOUR_SUPABASE_URL' &&
-               SUPABASE_CONFIG.anonKey && 
-               SUPABASE_CONFIG.anonKey !== 'YOUR_SUPABASE_ANON_KEY';
-    };
+        const ADMIN_PASSWORD = 'cv123456';       // 管理密码
 
-    // 显示/隐藏配置警告
-    const setupWarningEl = document.getElementById('setupWarning');
-    if (!isConfigured()) {
-        setupWarningEl.style.display = 'flex';
-    } else {
-        setupWarningEl.style.display = 'none';
-    }
+        // ---------- DOM 元素 ----------
+        const setupWarningEl = document.getElementById('setupWarning');
+        const filesContainer = document.getElementById('filesContainer');
+        const fileCountSpan = document.getElementById('fileCount');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const pdfFileInput = document.getElementById('pdfFileInput');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
 
-    // 初始化 Supabase 客户端 (若未配置会报错，但我们捕获)
-    let supabase = null;
-    if (isConfigured()) {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-            console.log('✅ Supabase 客户端已初始化');
-        } catch (e) {
-            console.warn('Supabase 初始化失败', e);
+        // 检查配置
+        const isConfigured = () => {
+            return SUPABASE_CONFIG.url && 
+                   SUPABASE_CONFIG.url !== 'YOUR_SUPABASE_URL' &&
+                   SUPABASE_CONFIG.anonKey && 
+                   SUPABASE_CONFIG.anonKey !== 'YOUR_SUPABASE_ANON_KEY';
+        };
+
+        if (!isConfigured()) {
             setupWarningEl.style.display = 'flex';
-        }
-    }
-
-    // ---------- DOM 元素 ----------
-    const filesContainer = document.getElementById('filesContainer');
-    const fileCountSpan = document.getElementById('fileCount');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const pdfFileInput = document.getElementById('pdfFileInput');
-    const adminPasswordInput = document.getElementById('adminPassword');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const uploadStatus = document.getElementById('uploadStatus');
-
-    // 辅助函数: 格式化字节
-    function formatBytes(bytes, decimals = 1) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    // 获取并渲染文件列表
-    async function fetchAndRenderFiles() {
-        if (!supabase) {
-            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>请先配置 Supabase 连接</p></div>`;
-            fileCountSpan.innerText = '0 个文件';
-            return;
+        } else {
+            setupWarningEl.style.display = 'none';
         }
 
-        try {
-            // 列出存储桶内所有文件
-            const { data: fileList, error } = await supabase
-                .storage
-                .from(SUPABASE_CONFIG.bucketName)
-                .list('', {
-                    limit: 100,
-                    offset: 0,
-                    sortBy: { column: 'created_at', order: 'desc' }
-                });
-
-            if (error) {
-                console.error('列出文件失败:', error);
-                if (error.message.includes('bucket') || error.message.includes('not found')) {
-                    throw new Error(`存储桶 "${SUPABASE_CONFIG.bucketName}" 不存在或权限不足。请创建公开桶并设置策略。`);
-                }
-                throw error;
+        // 初始化 Supabase 客户端
+        let supabaseClient = null;  // 改名避免与外部库冲突
+        if (isConfigured()) {
+            try {
+                supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+                console.log('✅ Supabase 客户端已初始化');
+            } catch (e) {
+                console.warn('Supabase 初始化失败', e);
+                setupWarningEl.style.display = 'flex';
             }
+        }
 
-            // 过滤掉文件夹
-            const files = (fileList || []).filter(item => item.id !== null && !item.id.endsWith('/')); 
+        // 辅助函数
+        function formatBytes(bytes, decimals = 1) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
 
-            fileCountSpan.innerText = `${files.length} 个文件`;
-
-            if (files.length === 0) {
-                filesContainer.innerHTML = `<div class="empty-state"><i class="far fa-folder-open"></i><p>还没有 PDF 文件，上传第一份简历吧</p></div>`;
+        // 获取并渲染文件列表
+        async function fetchAndRenderFiles() {
+            if (!supabaseClient) {
+                filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>请先配置 Supabase 连接</p></div>`;
+                fileCountSpan.innerText = '0 个文件';
                 return;
             }
 
-            let html = '';
-            for (const file of files) {
-                const fileName = file.name || '未知文件';
-                // 兼容文件大小获取
-                const fileSize = file.metadata?.size || 0;
-                const createdAt = file.created_at ? new Date(file.created_at).toLocaleDateString('zh-CN') : '未知时间';
-                
-                const { data: urlData } = supabase
+            try {
+                const { data: fileList, error } = await supabaseClient
                     .storage
                     .from(SUPABASE_CONFIG.bucketName)
-                    .getPublicUrl(file.name);
-                const publicUrl = urlData?.publicUrl || '#';
+                    .list('', {
+                        limit: 100,
+                        offset: 0,
+                        sortBy: { column: 'created_at', order: 'desc' }
+                    });
 
-                html += `
-                    <div class="file-item" data-filepath="${file.name}">
-                        <div class="file-icon"><i class="far fa-file-pdf"></i></div>
-                        <div class="file-name" title="${fileName}">${fileName.length > 30 ? fileName.slice(0,28)+'…' : fileName}</div>
-                        <div class="file-meta">
-                            <span><i class="far fa-hdd"></i> ${formatBytes(fileSize)}</span>
-                            <span><i class="far fa-calendar-alt"></i> ${createdAt}</span>
-                        </div>
-                        <div class="file-actions">
-                            <a href="${publicUrl}" target="_blank" download class="btn btn-outline" style="text-decoration:none;">
-                                <i class="fas fa-download"></i>下载
-                            </a>
-                            <button class="btn btn-danger delete-file-btn" data-filename="${file.name}" title="删除需要密码">
-                                <i class="fas fa-trash-alt"></i>删除
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            filesContainer.innerHTML = html;
+                if (error) throw error;
 
-            // 绑定删除事件
-            document.querySelectorAll('.delete-file-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    const filename = btn.getAttribute('data-filename');
-                    await handleDeleteFile(filename);
+                const files = (fileList || []).filter(item => item.id !== null && !item.id.endsWith('/')); 
+                fileCountSpan.innerText = `${files.length} 个文件`;
+
+                if (files.length === 0) {
+                    filesContainer.innerHTML = `<div class="empty-state"><i class="far fa-folder-open"></i><p>还没有 PDF 文件，上传第一份简历吧</p></div>`;
+                    return;
+                }
+
+                let html = '';
+                for (const file of files) {
+                    const fileName = file.name || '未知文件';
+                    const fileSize = file.metadata?.size || 0;
+                    const createdAt = file.created_at ? new Date(file.created_at).toLocaleDateString('zh-CN') : '未知时间';
+                    
+                    const { data: urlData } = supabaseClient
+                        .storage
+                        .from(SUPABASE_CONFIG.bucketName)
+                        .getPublicUrl(file.name);
+                    const publicUrl = urlData?.publicUrl || '#';
+
+                    html += `
+                        <div class="file-item">
+                            <div class="file-icon"><i class="far fa-file-pdf"></i></div>
+                            <div class="file-name" title="${fileName}">${fileName.length > 30 ? fileName.slice(0,28)+'…' : fileName}</div>
+                            <div class="file-meta">
+                                <span><i class="far fa-hdd"></i> ${formatBytes(fileSize)}</span>
+                                <span><i class="far fa-calendar-alt"></i> ${createdAt}</span>
+                            </div>
+                            <div class="file-actions">
+                                <a href="${publicUrl}" target="_blank" download class="btn btn-outline" style="text-decoration:none;">
+                                    <i class="fas fa-download"></i>下载
+                                </a>
+                                <button class="btn btn-danger delete-file-btn" data-filename="${file.name}">
+                                    <i class="fas fa-trash-alt"></i>删除
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                filesContainer.innerHTML = html;
+
+                document.querySelectorAll('.delete-file-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const filename = btn.getAttribute('data-filename');
+                        await handleDeleteFile(filename);
+                    });
                 });
-            });
 
-        } catch (err) {
-            console.error('获取文件出错:', err);
-            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>加载失败: ${err.message}</p><p style="font-size:0.8rem;">检查存储桶是否公开且策略正确</p></div>`;
-            fileCountSpan.innerText = '错误';
-        }
-    }
-
-    // 删除文件 (需密码验证)
-    async function handleDeleteFile(filename) {
-        if (!supabase) {
-            alert('Supabase 未配置，无法删除');
-            return;
+            } catch (err) {
+                console.error('获取文件出错:', err);
+                filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>加载失败: ${err.message}</p></div>`;
+                fileCountSpan.innerText = '错误';
+            }
         }
 
-        const password = prompt('🔐 请输入管理员密码以删除文件：');
-        if (!password) return;
-        if (password !== ADMIN_PASSWORD) {
-            alert('❌ 密码错误，无法删除');
-            return;
+        // 删除文件
+        async function handleDeleteFile(filename) {
+            if (!supabaseClient) return alert('Supabase 未配置');
+            const password = prompt('🔐 请输入管理员密码以删除文件：');
+            if (!password) return;
+            if (password !== ADMIN_PASSWORD) return alert('❌ 密码错误');
+            if (!confirm(`确定要永久删除 "${filename}" 吗？`)) return;
+
+            try {
+                const { error } = await supabaseClient.storage.from(SUPABASE_CONFIG.bucketName).remove([filename]);
+                if (error) throw error;
+                uploadStatus.innerHTML = `<span style="color:#16a34a;">✅ 已删除</span>`;
+                setTimeout(() => uploadStatus.innerHTML = '', 3000);
+                await fetchAndRenderFiles();
+            } catch (err) {
+                alert(`删除失败: ${err.message}`);
+            }
         }
 
-        if (!confirm(`确定要永久删除 "${filename}" 吗？此操作不可逆。`)) return;
+        // 上传文件
+        async function handleUpload() {
+            uploadStatus.innerHTML = '';
+            if (!supabaseClient) {
+                uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ Supabase 未配置</span>';
+                return;
+            }
+            const file = pdfFileInput.files[0];
+            if (!file) {
+                uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 请选择一个 PDF 文件</span>';
+                return;
+            }
+            if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+                uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 仅支持 PDF</span>';
+                return;
+            }
+            const password = adminPasswordInput.value.trim();
+            if (password !== ADMIN_PASSWORD) {
+                uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ 密码错误</span>';
+                return;
+            }
 
-        try {
-            const { error } = await supabase
-                .storage
-                .from(SUPABASE_CONFIG.bucketName)
-                .remove([filename]);
+            const timestamp = Date.now();
+            const safeName = file.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5._-]/g, '_');
+            const filePath = `${timestamp}-${safeName}`;
 
-            if (error) throw error;
-            
-            uploadStatus.innerHTML = `<span style="color:#16a34a;">✅ 已删除 ${filename}</span>`;
-            setTimeout(() => { uploadStatus.innerHTML = ''; }, 3000);
+            uploadStatus.innerHTML = `<span><span class="loading-spinner" style="border-top-color:#3b82f6; width:16px; height:16px;"></span> 上传中...</span>`;
+            uploadBtn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.storage
+                    .from(SUPABASE_CONFIG.bucketName)
+                    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+                if (error) throw error;
+
+                uploadStatus.innerHTML = '<span style="color:#16a34a;">✅ 上传成功！</span>';
+                pdfFileInput.value = '';
+                adminPasswordInput.value = '';
+                await fetchAndRenderFiles();
+            } catch (err) {
+                console.error('上传失败:', err);
+                uploadStatus.innerHTML = `<span style="color:#dc2626;">❌ 上传失败: ${err.message}</span>`;
+            } finally {
+                uploadBtn.disabled = false;
+                setTimeout(() => { if (uploadStatus.innerHTML.includes('成功') || uploadStatus.innerHTML.includes('失败')) uploadStatus.innerHTML = ''; }, 5000);
+            }
+        }
+
+        // 事件绑定
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.disabled = true;
+            const icon = refreshBtn.querySelector('i');
+            icon.classList.add('fa-spin');
             await fetchAndRenderFiles();
-        } catch (err) {
-            alert(`删除失败: ${err.message}`);
-            uploadStatus.innerHTML = `<span style="color:#dc2626;">删除失败: ${err.message}</span>`;
-        }
-    }
+            icon.classList.remove('fa-spin');
+            refreshBtn.disabled = false;
+        });
 
-    // 上传文件 (增强错误反馈)
-    async function handleUpload() {
-        // 清空之前的状态
-        uploadStatus.innerHTML = '';
-
-        // 1. 检查 Supabase 是否就绪
-        if (!supabase) {
-            uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ Supabase 未配置，请先设置密钥</span>';
-            console.error('上传失败: Supabase 未初始化');
-            return;
-        }
-
-        // 2. 检查文件
-        const file = pdfFileInput.files[0];
-        if (!file) {
-            uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 请选择一个 PDF 文件</span>';
-            return;
-        }
-        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-            uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 仅支持 PDF 格式</span>';
-            return;
-        }
-
-        // 3. 验证密码
-        const password = adminPasswordInput.value.trim();
-        if (password !== ADMIN_PASSWORD) {
-            uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ 密码错误，请重试</span>';
-            return;
-        }
-
-        // 生成唯一文件名
-        const timestamp = Date.now();
-        const safeName = file.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5._-]/g, '_');
-        const filePath = `${timestamp}-${safeName}`;
-
-        // 显示上传中状态
-        uploadStatus.innerHTML = `<span><span class="loading-spinner" style="border-top-color:#3b82f6; width:16px; height:16px;"></span> 正在上传 ${file.name} ...</span>`;
-        uploadBtn.disabled = true;
-
-        try {
-            const { error } = await supabase.storage
-                .from(SUPABASE_CONFIG.bucketName)
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (error) {
-                // 常见错误友好提示
-                let errorMsg = error.message;
-                if (error.message.includes('duplicate')) {
-                    errorMsg = '文件已存在，请重命名后上传';
-                } else if (error.message.includes('policy')) {
-                    errorMsg = '存储桶策略不允许上传，请在 Supabase 中添加 INSERT 策略';
-                } else if (error.message.includes('bucket')) {
-                    errorMsg = `存储桶 "${SUPABASE_CONFIG.bucketName}" 不存在，请先创建`;
-                }
-                throw new Error(errorMsg);
+        uploadBtn.addEventListener('click', handleUpload);
+        adminPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleUpload();
             }
+        });
 
-            uploadStatus.innerHTML = '<span style="color:#16a34a;">✅ 上传成功！文件已公开可下载</span>';
-            pdfFileInput.value = '';      
-            adminPasswordInput.value = '';
-            await fetchAndRenderFiles();   
-        } catch (err) {
-            console.error('上传失败:', err);
-            uploadStatus.innerHTML = `<span style="color:#dc2626;">❌ 上传失败: ${err.message}</span>`;
-        } finally {
-            uploadBtn.disabled = false;
-            // 成功/失败消息保留5秒后自动清除
-            setTimeout(() => {
-                if (uploadStatus.innerHTML.includes('成功') || uploadStatus.innerHTML.includes('失败')) {
-                    uploadStatus.innerHTML = '';
-                }
-            }, 5000);
-        }
-    }
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isConfigured()) {
+                fetchAndRenderFiles();
+            } else {
+                filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-cog"></i><p>请按提示配置 Supabase 密钥</p></div>`;
+                fileCountSpan.innerText = '需要配置';
+            }
+        });
 
-    // 刷新按钮
-    refreshBtn.addEventListener('click', async () => {
-        refreshBtn.disabled = true;
-        const icon = refreshBtn.querySelector('i');
-        icon.classList.add('fa-spin');
-        await fetchAndRenderFiles();
-        icon.classList.remove('fa-spin');
-        refreshBtn.disabled = false;
-    });
-
-    uploadBtn.addEventListener('click', handleUpload);
-
-    // 允许回车触发上传
-    adminPasswordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleUpload();
-        }
-    });
-
-    // 页面初始化
-    window.addEventListener('DOMContentLoaded', () => {
-        if (isConfigured()) {
-            fetchAndRenderFiles();
-        } else {
-            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-cog"></i><p>请按提示配置 Supabase 密钥</p></div>`;
-            fileCountSpan.innerText = '需要配置';
-        }
-    });
-
-    // 控制台配置指南
-    console.log('%c📘 简历云库 · 配置指南', 'font-size:16px; font-weight:bold; color:#2563eb');
-    console.log('1. 前往 https://supabase.com 创建项目');
-    console.log('2. 在 Storage 中新建公开桶 (bucket): ' + SUPABASE_CONFIG.bucketName);
-    console.log('3. 桶策略: 允许 SELECT, INSERT (匿名). 示例 SQL:');
-    console.log(`   CREATE POLICY "Public Access" ON storage.objects FOR ALL USING (bucket_id = '${SUPABASE_CONFIG.bucketName}');`);
-    console.log('4. 将项目 URL 和 anon key 填入上方 SUPABASE_CONFIG');
-    console.log('5. 刷新页面，即可上传/下载。');
+        console.log('%c📘 简历云库 · 配置指南', 'font-size:16px; font-weight:bold; color:#2563eb');
+        console.log('1. 替换 SUPABASE_CONFIG 中的 url 和 anonKey');
+        console.log('2. 在 Supabase 创建公开桶: ' + SUPABASE_CONFIG.bucketName);
+        console.log('3. 添加策略: INSERT 和 SELECT 允许 public 访问');
+    })();
 </script>
 </body>
 </html>
