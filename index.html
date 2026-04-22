@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>云端简历 · 作品集</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 1000px;
+            padding: 2rem 2rem 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: -0.01em;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.25rem;
+        }
+
+        h1 i {
+            color: #3b82f6;
+            font-size: 2rem;
+        }
+
+        .subhead {
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-weight: 400;
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+        }
+
+        .setup-warning {
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: 20px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 2rem;
+            color: #854d0e;
+            font-size: 0.95rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setup-warning i {
+            font-size: 1.6rem;
+            color: #eab308;
+        }
+
+        .setup-warning .msg {
+            flex: 1;
+        }
+
+        .setup-warning code {
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: #0f172a;
+        }
+
+        .file-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: #0f172a;
+        }
+
+        .badge {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .file-item {
+            background: white;
+            border-radius: 20px;
+            padding: 1.2rem 1.2rem 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f6;
+            transition: transform 0.1s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-item:hover {
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .file-icon {
+            font-size: 2.8rem;
+            color: #ef4444;
+            margin-bottom: 8px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            word-break: break-word;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .file-actions {
+            margin-top: auto;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px dashed #dee4ed;
+            padding-top: 12px;
+        }
+
+        .btn {
+            border: none;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1e293b;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .btn i {
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-danger {
+            color: #b91c1c;
+            background: #fee2e2;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .upload-card {
+            background: #f8fafc;
+            border-radius: 28px;
+            padding: 1.8rem 2rem;
+            border: 1px dashed #94a3b8;
+        }
+
+        .upload-title {
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
+        }
+
+        .form-group {
+            margin-bottom: 1.4rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+
+        input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            transition: border 0.15s;
+        }
+
+        input[type="file"] {
+            padding: 10px 12px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-message {
+            min-height: 2.2rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem;
+            background: #f1f5f9;
+            border-radius: 32px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="glass-card">
+    <h1>
+        <i class="fas fa-cloud-upload-alt"></i> 
+        简历·作品集云库
+    </h1>
+    <div class="subhead">上传你的 PDF，任何人皆可自由下载</div>
+
+    <!-- 配置提醒（未配置时显示） -->
+    <div id="setupWarning" class="setup-warning" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div class="msg">
+            <strong>🔧 需要配置 Supabase</strong><br>
+            在代码中找到 <code>SUPABASE_CONFIG</code> ，替换为你的 <code>supabaseUrl</code> 和 <code>anonKey</code>。<br>
+            并创建名为 <code>pdf-archive</code> 的公开存储桶 (Public bucket)。详见注释。
+        </div>
+    </div>
+
+    <!-- 文件列表区 -->
+    <div class="file-section">
+        <div class="section-header">
+            <h2><i class="far fa-file-pdf" style="margin-right: 8px;"></i>云端文件 · 自由下载</h2>
+            <span class="badge" id="fileCount">— 个文件</span>
+        </div>
+        <div id="filesContainer" class="file-grid">
+            <div class="empty-state">
+                <i class="far fa-folder-open"></i>
+                <p>暂无文件，请先上传</p>
+            </div>
+        </div>
+        <div style="margin-top: 12px; text-align: right;">
+            <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync-alt"></i>刷新列表</button>
+        </div>
+    </div>
+
+    <!-- 上传区 (管理员操作) -->
+    <div class="upload-card">
+        <div class="upload-title"><i class="fas fa-lock" style="margin-right: 10px;"></i>管理员上传 · 需密码</div>
+        <div class="form-group">
+            <label><i class="far fa-file-pdf"></i> 选择 PDF 文件</label>
+            <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" />
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-key"></i> 上传密码</label>
+            <input type="password" id="adminPassword" placeholder="输入管理密码" value="" />
+        </div>
+        <div class="upload-actions">
+            <button class="btn btn-primary" id="uploadBtn"><i class="fas fa-cloud-upload-alt"></i> 上传到云端</button>
+            <span id="uploadStatus" class="status-message"></span>
+        </div>
+        <p style="font-size: 0.8rem; margin-top: 1.2rem; color: #64748b;">
+            <i class="far fa-info-circle"></i> 默认密码为 <code>cv123456</code> (可修改常量 ADMIN_PASSWORD)
+        </p>
+    </div>
+    <div class="footer-note">
+        ⚡ 基于 Supabase 存储 · 访客下载无需密码 · 刷新即见最新
+    </div>
+</div>
+
+<!-- Supabase 客户端库 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    // ===============================================
+    // 🔐 配置区域 —— 请替换为你自己的 Supabase 信息
+    // ===============================================
+    const SUPABASE_CONFIG = {
+        // 你的 Supabase 项目 URL (例如 https://xxxxx.supabase.co)
+        url: 'YOUR_SUPABASE_URL',          
+        // 你的 anon / public key (在 Project Settings > API 中找到)
+        anonKey: 'YOUR_SUPABASE_ANON_KEY',  
+        // 存储桶名称 (建议: pdf-archive) —— 请先在 Supabase 中创建 Public bucket
+        bucketName: 'pdf-archive'           
+    };
+
+    // 管理员密码 (可自行修改)
+    const ADMIN_PASSWORD = 'cv123456';       
+
+    // ---------- 检查是否已配置 ----------
+    const isConfigured = () => {
+        return SUPABASE_CONFIG.url && 
+               SUPABASE_CONFIG.url !== 'YOUR_SUPABASE_URL' &&
+               SUPABASE_CONFIG.anonKey && 
+               SUPABASE_CONFIG.anonKey !== 'YOUR_SUPABASE_ANON_KEY';
+    };
+
+    // 显示/隐藏配置警告
+    const setupWarningEl = document.getElementById('setupWarning');
+    if (!isConfigured()) {
+        setupWarningEl.style.display = 'flex';
+    } else {
+        setupWarningEl.style.display = 'none';
+    }
+
+    // 初始化 Supabase 客户端 (若未配置会报错，但我们捕获)
+    let supabase = null;
+    if (isConfigured()) {
+        try {
+            supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+            console.log('✅ Supabase 客户端已初始化');
+        } catch (e) {
+            console.warn('Supabase 初始化失败', e);
+            setupWarningEl.style.display = 'flex';
+        }
+    }
+
+    // ---------- DOM 元素 ----------
+    const filesContainer = document.getElementById('filesContainer');
+    const fileCountSpan = document.getElementById('fileCount');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    // 辅助函数: 格式化字节
+    function formatBytes(bytes, decimals = 1) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // 获取并渲染文件列表
+    async function fetchAndRenderFiles() {
+        if (!supabase) {
+            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>请先配置 Supabase 连接</p></div>`;
+            fileCountSpan.innerText = '0 个文件';
+            return;
+        }
+
+        try {
+            // 列出存储桶内所有文件
+            const { data: fileList, error } = await supabase
+                .storage
+                .from(SUPABASE_CONFIG.bucketName)
+                .list('', {
+                    limit: 100,
+                    offset: 0,
+                    sortBy: { column: 'created_at', order: 'desc' }
+                });
+
+            if (error) {
+                console.error('列出文件失败:', error);
+                if (error.message.includes('bucket') || error.message.includes('not found')) {
+                    throw new Error(`存储桶 "${SUPABASE_CONFIG.bucketName}" 不存在或权限不足。请创建公开桶并设置策略。`);
+                }
+                throw error;
+            }
+
+            // 过滤掉文件夹
+            const files = (fileList || []).filter(item => item.id !== null && !item.id.endsWith('/')); 
+
+            fileCountSpan.innerText = `${files.length} 个文件`;
+
+            if (files.length === 0) {
+                filesContainer.innerHTML = `<div class="empty-state"><i class="far fa-folder-open"></i><p>还没有 PDF 文件，上传第一份简历吧</p></div>`;
+                return;
+            }
+
+            let html = '';
+            for (const file of files) {
+                const fileName = file.name || '未知文件';
+                // 兼容文件大小获取
+                const fileSize = file.metadata?.size || 0;
+                const createdAt = file.created_at ? new Date(file.created_at).toLocaleDateString('zh-CN') : '未知时间';
+                
+                const { data: urlData } = supabase
+                    .storage
+                    .from(SUPABASE_CONFIG.bucketName)
+                    .getPublicUrl(file.name);
+                const publicUrl = urlData?.publicUrl || '#';
+
+                html += `
+                    <div class="file-item" data-filepath="${file.name}">
+                        <div class="file-icon"><i class="far fa-file-pdf"></i></div>
+                        <div class="file-name" title="${fileName}">${fileName.length > 30 ? fileName.slice(0,28)+'…' : fileName}</div>
+                        <div class="file-meta">
+                            <span><i class="far fa-hdd"></i> ${formatBytes(fileSize)}</span>
+                            <span><i class="far fa-calendar-alt"></i> ${createdAt}</span>
+                        </div>
+                        <div class="file-actions">
+                            <a href="${publicUrl}" target="_blank" download class="btn btn-outline" style="text-decoration:none;">
+                                <i class="fas fa-download"></i>下载
+                            </a>
+                            <button class="btn btn-danger delete-file-btn" data-filename="${file.name}" title="删除需要密码">
+                                <i class="fas fa-trash-alt"></i>删除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            filesContainer.innerHTML = html;
+
+            // 绑定删除事件
+            document.querySelectorAll('.delete-file-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const filename = btn.getAttribute('data-filename');
+                    await handleDeleteFile(filename);
+                });
+            });
+
+        } catch (err) {
+            console.error('获取文件出错:', err);
+            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>加载失败: ${err.message}</p><p style="font-size:0.8rem;">检查存储桶是否公开且策略正确</p></div>`;
+            fileCountSpan.innerText = '错误';
+        }
+    }
+
+    // 删除文件 (需密码验证)
+    async function handleDeleteFile(filename) {
+        if (!supabase) {
+            alert('Supabase 未配置，无法删除');
+            return;
+        }
+
+        const password = prompt('🔐 请输入管理员密码以删除文件：');
+        if (!password) return;
+        if (password !== ADMIN_PASSWORD) {
+            alert('❌ 密码错误，无法删除');
+            return;
+        }
+
+        if (!confirm(`确定要永久删除 "${filename}" 吗？此操作不可逆。`)) return;
+
+        try {
+            const { error } = await supabase
+                .storage
+                .from(SUPABASE_CONFIG.bucketName)
+                .remove([filename]);
+
+            if (error) throw error;
+            
+            uploadStatus.innerHTML = `<span style="color:#16a34a;">✅ 已删除 ${filename}</span>`;
+            setTimeout(() => { uploadStatus.innerHTML = ''; }, 3000);
+            await fetchAndRenderFiles();
+        } catch (err) {
+            alert(`删除失败: ${err.message}`);
+            uploadStatus.innerHTML = `<span style="color:#dc2626;">删除失败: ${err.message}</span>`;
+        }
+    }
+
+    // 上传文件 (增强错误反馈)
+    async function handleUpload() {
+        // 清空之前的状态
+        uploadStatus.innerHTML = '';
+
+        // 1. 检查 Supabase 是否就绪
+        if (!supabase) {
+            uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ Supabase 未配置，请先设置密钥</span>';
+            console.error('上传失败: Supabase 未初始化');
+            return;
+        }
+
+        // 2. 检查文件
+        const file = pdfFileInput.files[0];
+        if (!file) {
+            uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 请选择一个 PDF 文件</span>';
+            return;
+        }
+        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+            uploadStatus.innerHTML = '<span style="color:#b45309;">⚠️ 仅支持 PDF 格式</span>';
+            return;
+        }
+
+        // 3. 验证密码
+        const password = adminPasswordInput.value.trim();
+        if (password !== ADMIN_PASSWORD) {
+            uploadStatus.innerHTML = '<span style="color:#b91c1c;">❌ 密码错误，请重试</span>';
+            return;
+        }
+
+        // 生成唯一文件名
+        const timestamp = Date.now();
+        const safeName = file.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5._-]/g, '_');
+        const filePath = `${timestamp}-${safeName}`;
+
+        // 显示上传中状态
+        uploadStatus.innerHTML = `<span><span class="loading-spinner" style="border-top-color:#3b82f6; width:16px; height:16px;"></span> 正在上传 ${file.name} ...</span>`;
+        uploadBtn.disabled = true;
+
+        try {
+            const { error } = await supabase.storage
+                .from(SUPABASE_CONFIG.bucketName)
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                // 常见错误友好提示
+                let errorMsg = error.message;
+                if (error.message.includes('duplicate')) {
+                    errorMsg = '文件已存在，请重命名后上传';
+                } else if (error.message.includes('policy')) {
+                    errorMsg = '存储桶策略不允许上传，请在 Supabase 中添加 INSERT 策略';
+                } else if (error.message.includes('bucket')) {
+                    errorMsg = `存储桶 "${SUPABASE_CONFIG.bucketName}" 不存在，请先创建`;
+                }
+                throw new Error(errorMsg);
+            }
+
+            uploadStatus.innerHTML = '<span style="color:#16a34a;">✅ 上传成功！文件已公开可下载</span>';
+            pdfFileInput.value = '';      
+            adminPasswordInput.value = '';
+            await fetchAndRenderFiles();   
+        } catch (err) {
+            console.error('上传失败:', err);
+            uploadStatus.innerHTML = `<span style="color:#dc2626;">❌ 上传失败: ${err.message}</span>`;
+        } finally {
+            uploadBtn.disabled = false;
+            // 成功/失败消息保留5秒后自动清除
+            setTimeout(() => {
+                if (uploadStatus.innerHTML.includes('成功') || uploadStatus.innerHTML.includes('失败')) {
+                    uploadStatus.innerHTML = '';
+                }
+            }, 5000);
+        }
+    }
+
+    // 刷新按钮
+    refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        const icon = refreshBtn.querySelector('i');
+        icon.classList.add('fa-spin');
+        await fetchAndRenderFiles();
+        icon.classList.remove('fa-spin');
+        refreshBtn.disabled = false;
+    });
+
+    uploadBtn.addEventListener('click', handleUpload);
+
+    // 允许回车触发上传
+    adminPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleUpload();
+        }
+    });
+
+    // 页面初始化
+    window.addEventListener('DOMContentLoaded', () => {
+        if (isConfigured()) {
+            fetchAndRenderFiles();
+        } else {
+            filesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-cog"></i><p>请按提示配置 Supabase 密钥</p></div>`;
+            fileCountSpan.innerText = '需要配置';
+        }
+    });
+
+    // 控制台配置指南
+    console.log('%c📘 简历云库 · 配置指南', 'font-size:16px; font-weight:bold; color:#2563eb');
+    console.log('1. 前往 https://supabase.com 创建项目');
+    console.log('2. 在 Storage 中新建公开桶 (bucket): ' + SUPABASE_CONFIG.bucketName);
+    console.log('3. 桶策略: 允许 SELECT, INSERT (匿名). 示例 SQL:');
+    console.log(`   CREATE POLICY "Public Access" ON storage.objects FOR ALL USING (bucket_id = '${SUPABASE_CONFIG.bucketName}');`);
+    console.log('4. 将项目 URL 和 anon key 填入上方 SUPABASE_CONFIG');
+    console.log('5. 刷新页面，即可上传/下载。');
+</script>
+</body>
+</html>
